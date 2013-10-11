@@ -1,0 +1,46 @@
+% vim: set spell:
+% vim: set spelllang=en:
+\documentclass[a4paper,11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage[T1]{fontenc}
+
+
+\author{Raphael Catolino}
+\title{Numerical solution of restricted n-body problems, using
+the central differences approximation.}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+  In order to simulate the trajectories of celestial bodies,
+  we want a numerical solution to the n-body problem created
+  by the modeling of the gravitational interactions between each body.
+
+  We want to be able to simulate these trajectories for a space scale
+  with the same order of magnitude as the solar system, and a time scale
+  varying from a few days to a few years.
+
+  We use a simple finite difference method on a discrete time scale
+  to approximate the second order derivative component in the formulation
+  of Newton's second law. No consideration has been given to the collision case.
+
+  Instead of focusing on precision or accuracy, the main goal of the
+  study is the ease of implementation. Therefore we only study here the
+  stability and convergence of the solution.
+\end{abstract}
+\newpage
+\tableofcontents
+\newpage
+
+\section{Problem formulation}
+\section{Discretization of the time dimension}
+\section{Central differences approximation}
+\section{Initial conditions}
+\section{Stability and convergence study}
+\section{Conclusion and results}
+
+\end{document}
+
