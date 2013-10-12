@@ -11,24 +11,29 @@ G = 6.67300*10^-11; % Unit : m³.kg¯¹.s¯²
 
 % intial time : (in seconds)
 t0 = 0;
-% number of step (length of the simulation)
-kmax = 40;
+% number of step (length of the simulation in days)
+l = 1600;
 
 % time increments : (in seconds)
-dt = 3600*12; %(1 half day)
+dt = 3600; %(in seconds)
+kmax = (24*3600*l)/dt;
 
 % Bodies description
 % Number of bodies
-n = 2;
+n = 3;
 % Initial positions and speed (respectively in meters and meters/second) (at t = t0 (k = 0))
 BP0 = [ 0,        0, 0; % Central body (sun)
+        %0, 75*10^9, 0; % Second orbiting body (other planet)
         150*10^9, 0, 0; % Orbiting body (earth)
-        0, 75*10^9, 0]; % Second orbiting body (other planet)
+        0, 800*10^9, 0]; % Second orbiting body (jupiter)
+        %150*10^9, 0, 0]; % Orbiting body (earth)
 BV0 = [ 0, 0, 0; % Initialy immobile sun
-        0, 465, 0; % Earth speed.
-        200, 0, 0]; % Second planet speed.
+        %-30000, 0, 0; % Second planet speed.
+        0, 29780, 0; % Earth speed.
+        -13007, 0, 0]; % Second planet speed (jupiter).
+        %0, , 0]; % Earth speed.
 % Masses (in kg);
-BM = [ 1.988435*10^30, 5.9721986*10^24, 1.3459*10^24 ];
+BM = [ 1.988435*10^30, 5.9721986*10^24, 1.9*10^27];
 
 % Compute the initial positions at t = t0 + dt (k=1).
 BP1 = ics(BP0, BV0, dt);
