@@ -12,10 +12,10 @@ G = 6.67300*10^-11; % Unit : m³.kg¯¹.s¯²
 % intial time : (in seconds)
 t0 = 0;
 % length of the simulation (in days)
-l = 70;
+l = 360;
 
 % time increments : (in seconds)
-dt = 3600; %(in seconds)
+dt = 600; %(in seconds)
 kmax = (24*3600*l)/dt
 
 % Bodies description
@@ -29,7 +29,7 @@ BP0 = [ 0,        0, 0; % Central body (sun)
         %150*10^9, 0, 0]; % Orbiting body (earth)
 BV0 = [ 0, 0, 0; % Initialy immobile sun
         %-30000, 0, 0; % Second planet speed.
-        0, 30000, 0; % Earth speed.
+        0, 3978, 0; % Earth speed.
         -13007, 0, 0]; % Second planet speed (jupiter).
         %0, 29780, 0]; % Earth speed.
 % Masses (in kg);
@@ -62,15 +62,15 @@ for k = 3:kmax
     for i = 1:n
       if i ~= j
         Ci = G*BM(i);
-        [Fx, Fy, Fz] = f(X(k-1, i), Y(k-1, i), Z(k-1, i), X(k-1, j), Y(k-1, j), Z(k-1, j));
+        [Fx, Fy, Fz] = f(Xh(k-1, i), Yh(k-1, i), Zh(k-1, i), Xh(k-1, j), Yh(k-1, j), Zh(k-1, j));
         Sx = Sx + Ci*Fx;
         Sy = Sy + Ci*Fy;
         Sz = Sz + Ci*Fz;
       end
     end
-    X(k,j) = finite_diff(Sx, X(k-2,j), X(k-1,j), dt);
-    Y(k,j) = finite_diff(Sy, Y(k-2,j), Y(k-1,j), dt);
-    Z(k,j) = finite_diff(Sz, Z(k-2,j), Z(k-1,j), dt);
+    X(k,j) = finite_diff(Sx, Xh(k-2,j), Xh(k-1,j), dt);
+    Y(k,j) = finite_diff(Sy, Yh(k-2,j), Yh(k-1,j), dt);
+    Z(k,j) = finite_diff(Sz, Zh(k-2,j), Zh(k-1,j), dt);
 
     % Store the result of f for each dimension.
     S(j,:) = [Sx; Sy; Sz];
@@ -82,24 +82,36 @@ for k = 3:kmax
       if i ~= j
         Ci = G*BM(i);
         [Fx, Fy, Fz] = f(X(k, i), Y(k, i), Z(k, i), X(k, j), Y(k, j), Z(k, j));
-        Sx = Sx + Ci*Fx;
-        Sy = Sy + Ci*Fy;
-        Sz = Sz + Ci*Fz;
+        Shx = Shx + Ci*Fx;
+        Shy = Shy + Ci*Fy;
+        Shz = Shz + Ci*Fz;
       end
     end
-    Xh(k,j) = finite_diff((Sx+S(j,1))/2, X(k-2,j), X(k-1,j), dt);
-    Yh(k,j) = finite_diff((Sy+S(j,2))/2, Y(k-2,j), Y(k-1,j), dt);
-    Zh(k,j) = finite_diff((Sz+S(j,3))/2, Z(k-2,j), Z(k-1,j), dt);
-    err(k,j) = norm([Xh(k,j)-X(k,j), Yh(k,j)-Y(k,j), Zh(k,j)-Z(k,j)]);
+    Xh(k,j) = finite_diff((Shx+S(j,1))/2, Xh(k-2,j), Xh(k-1,j), dt);
+    Yh(k,j) = finite_diff((Shy+S(j,2))/2, Yh(k-2,j), Yh(k-1,j), dt);
+    Zh(k,j) = finite_diff((Shz+S(j,3))/2, Zh(k-2,j), Zh(k-1,j), dt);
+    err(k,j) = norm([Xh(k,j)-X(k,j), Yh(k,j)-Y(k,j), Zh(k,j)-Z(k,j)])/norm([Xh(k,j), Yh(k,j), Zh(k,j)]);
+    if err(k,j) > 0.02
+      hold on
+      plot(Xh(1:k,:),Yh(1:k,:),'b')
+      plot(X(1:k,:),Y(1:k,:),'r')
+      hold off
+      figure
+      plot(err(1:k,j));
+      return
+    end
   end
 end
 
-plot(X,Y)
+hold on
+plot(X,Y,'r')
+plot(Xh,Yh,'b')
+hold off
 grid on
-axis square
 figure
+
 hold on
 for j = 1:n
-  plot(err(:,j));
+  plot(err(1000:kmax,j));
 end
 hold off
