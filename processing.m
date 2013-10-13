@@ -11,16 +11,16 @@ G = 6.67300*10^-11; % Unit : m³.kg¯¹.s¯²
 
 % intial time : (in seconds)
 t0 = 0;
-% number of step (length of the simulation in days)
-l = 1600;
+% length of the simulation (in days)
+l = 70;
 
 % time increments : (in seconds)
 dt = 3600; %(in seconds)
-kmax = (24*3600*l)/dt;
+kmax = (24*3600*l)/dt
 
 % Bodies description
 % Number of bodies
-n = 3;
+n = 2;
 % Initial positions and speed (respectively in meters and meters/second) (at t = t0 (k = 0))
 BP0 = [ 0,        0, 0; % Central body (sun)
         %0, 75*10^9, 0; % Second orbiting body (other planet)
@@ -29,9 +29,9 @@ BP0 = [ 0,        0, 0; % Central body (sun)
         %150*10^9, 0, 0]; % Orbiting body (earth)
 BV0 = [ 0, 0, 0; % Initialy immobile sun
         %-30000, 0, 0; % Second planet speed.
-        0, 29780, 0; % Earth speed.
+        0, 30000, 0; % Earth speed.
         -13007, 0, 0]; % Second planet speed (jupiter).
-        %0, , 0]; % Earth speed.
+        %0, 29780, 0]; % Earth speed.
 % Masses (in kg);
 BM = [ 1.988435*10^30, 5.9721986*10^24, 1.9*10^27];
 
@@ -42,6 +42,7 @@ BP1 = ics(BP0, BV0, dt);
 X = zeros(kmax,n);
 Y = zeros(kmax,n);
 Z = zeros(kmax,n);
+err = zeros(kmax,n);
 
 X(1,1:n) = BP0(1:n,1)';
 Y(1,1:n) = BP0(1:n,2)';
@@ -49,10 +50,13 @@ Z(1,1:n) = BP0(1:n,3)';
 X(2,1:n) = BP1(1:n,1)';
 Y(2,1:n) = BP1(1:n,2)';
 Z(2,1:n) = BP1(1:n,3)';
-
+Xh = X;
+Yh = Y;
+Zh = Z;
 % Simulation :
 
 for k = 3:kmax
+  S = zeros(n,3);
   for j = 1:n
     Sx = 0; Sy = 0; Sz = 0;
     for i = 1:n
@@ -67,8 +71,35 @@ for k = 3:kmax
     X(k,j) = finite_diff(Sx, X(k-2,j), X(k-1,j), dt);
     Y(k,j) = finite_diff(Sy, Y(k-2,j), Y(k-1,j), dt);
     Z(k,j) = finite_diff(Sz, Z(k-2,j), Z(k-1,j), dt);
+
+    % Store the result of f for each dimension.
+    S(j,:) = [Sx; Sy; Sz];
+  end
+  % Second pass for heun's method
+  for j = 1:n
+    Shx = 0; Shy = 0; Shz = 0;
+    for i = 1:n
+      if i ~= j
+        Ci = G*BM(i);
+        [Fx, Fy, Fz] = f(X(k, i), Y(k, i), Z(k, i), X(k, j), Y(k, j), Z(k, j));
+        Sx = Sx + Ci*Fx;
+        Sy = Sy + Ci*Fy;
+        Sz = Sz + Ci*Fz;
+      end
+    end
+    Xh(k,j) = finite_diff((Sx+S(j,1))/2, X(k-2,j), X(k-1,j), dt);
+    Yh(k,j) = finite_diff((Sy+S(j,2))/2, Y(k-2,j), Y(k-1,j), dt);
+    Zh(k,j) = finite_diff((Sz+S(j,3))/2, Z(k-2,j), Z(k-1,j), dt);
+    err(k,j) = norm([Xh(k,j)-X(k,j), Yh(k,j)-Y(k,j), Zh(k,j)-Z(k,j)]);
   end
 end
 
 plot(X,Y)
 grid on
+axis square
+figure
+hold on
+for j = 1:n
+  plot(err(:,j));
+end
+hold off

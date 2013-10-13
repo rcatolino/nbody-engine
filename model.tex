@@ -102,7 +102,7 @@ as a function of the position of all the bodies at the time steps $k - 1$ and $k
   \frac{\vec{R_{i,k-1}} - \vec{R_{j,k-1}}}{|{\vec{R_{i,k-1}} - \vec{R_{j,k-1}}}|^3}
   \label{dodesystem}
 \end{multline}
-\section{Initial conditions}
+\section{Initial value problem}
 In order to use \eqref{dodesystem} to compute the positions of the bodies, we need their
 initial positions for the first two time steps, for $k = 0$ and $k = 1$.
 We will use the initial position and speed of the bodies and derive their position
@@ -119,6 +119,7 @@ Substituting the speed by it's forward difference approximation we obtain :
 It's worth noting that using this approximation causes the leading error to go
 down from $O(\delta t^2)$ to $O(\delta t)$.
 \section{Stability and convergence study}
+\section{Adaptive step size}
 \section{Conclusion and results}
 
 \end{document}
