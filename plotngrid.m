@@ -1,4 +1,7 @@
 function [] = plotngrid( X, Y, BM )
+if size(X,2) ~= 3
+  return;
+end
 hold on
 [X1, Y1] = mvmasscenter(X, Y, BM);
 [Xa, Ya] = mvaxis(X1, Y1);

@@ -12,21 +12,21 @@ G = 6.67300*10^-11; % Unit : m³.kg¯¹.s¯²
 % intial time : (in seconds)
 t0 = 0;
 % length of the simulation (in days)
-l = 404;
+l = 808;
 errmax = 10*10^-9;
 dtmin = 5; %(seconds)
 lend = l*3600*24;
 lcurrent = 0;
 
 % time increments : (in seconds)
-dt = 3600; %(in seconds)
+dt = 600; %(in seconds)
 
 % Bodies description
 % Number of bodies
-n = 2;
+n = 3;
 % Masses (in kg);
 %BM = [ 1.988435*10^30, 5.9721986*10^24, 1.9*10^27];
-BM = [ 30*1.988435*10^30, 1.988435*10^30, 1.9721986*10^24];
+BM = [ 30*1.988435*10^30, 1.988435*10^30, 1.9721986*10^4];
 [lx, ly, vlx, vly] = l4char(200*10^9, BM(1), BM(2));
 % Initial positions and speed (respectively in meters and meters/second) (at t = t0 (k = 0))
 BP0 = [ 0,        0, 0; % Central body (big sun)
@@ -62,7 +62,8 @@ Y = Y;
 Z = Z;
 % Simulation :
 p = 0;
-while k < 3
+S = zeros(n,3);
+while lcurrent < lend
   k = k+1;
   % display percentage
   if floor(100*lcurrent/lend) == p
@@ -73,7 +74,6 @@ while k < 3
   X = [X; zeros(1,n)];
   Y = [Y; zeros(1,n)];
   Z = [Z; zeros(1,n)];
-  S = zeros(n,3);
   for j = 1:n
     Sx = 0; Sy = 0; Sz = 0;
     for i = 1:n
@@ -85,53 +85,62 @@ while k < 3
         Sz = Sz + Ci*Fz;
       end
     end
-    Xkj = finite_diff(Sx, X(k-2,j), X(k-1,j), dt)
-    Ykj = finite_diff(Sy, Y(k-2,j), Y(k-1,j), dt)
-    Zkj = finite_diff(Sz, Z(k-2,j), Z(k-1,j), dt)
-    X(k,j) = Xkj;
-    Y(k,j) = Ykj;
-    Z(k,j) = Zkj;
 
     % Store the result of f for each dimension.
+    % Use the 2 order approximation
+    X(k,j) = finite_diff(Sx, X(k-2,j), X(k-1,j), dt);
+    Y(k,j) = finite_diff(Sy, Y(k-2,j), Y(k-1,j), dt);
+    Z(k,j) = finite_diff(Sz, Z(k-2,j), Z(k-1,j), dt);
+
+    if k > 4
+      % Use the 4th order approximation
+      Xkj = -12*(dt^2)*S(j,1) - X(k-4,j) + 16*X(k-3,j) - 30*X(k-2,j) + 16*X(k-1,j);
+      Ykj = -12*(dt^2)*S(j,2) - Y(k-4,j) + 16*Y(k-3,j) - 30*Y(k-2,j) + 16*Y(k-1,j);
+      Zkj = -12*(dt^2)*S(j,3) - Z(k-4,j) + 16*Z(k-3,j) - 30*Z(k-2,j) + 16*Z(k-1,j);
+      err(k,j) = norm([X(k,j)-Xkj, Y(k,j)-Ykj, Z(k,j)-Zkj])/norm([Xkj, Ykj, Zkj]);
+      if err(k,j) ~= err(k,j)
+        max(err)
+        return
+      end
+      %X(k,j) = Xkj;
+      %Y(k,j) = Ykj;
+      %Z(k,j) = Zkj;
+    end
     S(j,:) = [Sx; Sy; Sz];
+
   end
 
-  % Second pass for heun's method
-  for j = 1:n
-    Sx = 0; Sy = 0; Sz = 0;
-    for i = 1:n
-      if i ~= j
-        Ci = G*BM(i);
-        [Fx, Fy, Fz] = f(X(k, i), Y(k, i), Z(k, i), X(k, j), Y(k, j), Z(k, j));
-        Sx = Sx + Ci*Fx;
-        Sy = Sy + Ci*Fy;
-        Sz = Sz + Ci*Fz;
-      end
-    end
-    Xkj = finite_diff((Sx+S(j,1))/2, X(k-2,j), X(k-1,j), dt)
-    Ykj = finite_diff((Sy+S(j,2))/2, Y(k-2,j), Y(k-1,j), dt)
-    Zkj = finite_diff((Sz+S(j,3))/2, Z(k-2,j), Z(k-1,j), dt)
-    err(k,j) = norm([X(k,j)-Xkj, Y(k,j)-Ykj, Z(k,j)-Zkj])/norm([Xkj, Ykj, Zkj])
-    X(k,j) = Xkj;
-    Y(k,j) = Ykj;
-    Z(k,j) = Zkj;
-  end
+  % Second pass for 4 order method
+%  if k > 4
+%  for j = 1:n
+%    Sx = 0; Sy = 0; Sz = 0;
+%    for i = 1:n
+%      if i ~= j
+%        Ci = G*BM(i);
+%        [Fx, Fy, Fz] = f(X(k, i), Y(k, i), Z(k, i), X(k, j), Y(k, j), Z(k, j));
+%        Sx = Sx + Ci*Fx;
+%        Sy = Sy + Ci*Fy;
+%        Sz = Sz + Ci*Fz;
+%      end
+%    end
+%    Xkj = finite_diff((Sx+S(j,1))/2, X(k-2,j), X(k-1,j), dt);
+%    Ykj = finite_diff((Sy+S(j,2))/2, Y(k-2,j), Y(k-1,j), dt);
+%    Zkj = finite_diff((Sz+S(j,3))/2, Z(k-2,j), Z(k-1,j), dt);
+%    err(k,j) = norm([X(k,j)-Xkj, Y(k,j)-Ykj, Z(k,j)-Zkj])/norm([Xkj, Ykj, Zkj]);
+%    X(k,j) = Xkj;
+%    Y(k,j) = Ykj;
+%    Z(k,j) = Zkj;
+%  end
 
-  % Check the error for each j
-  if k > 1000 && max(err(k,:)) > 10^-9
-    %dt = dt*0.8
-    if dt < dtmin
-      plotngrid(X(1:k,:),Y(1:k,:), BM)
-      figure;
-      hold on
-      for j = 1:n
-        plot(err(1000:k,j));
-      end
-      hold off
-      error('error too big');
-    end
-  elseif k > 1000 && max(err(k,:)) < 10^-10
-    %dt = dt*1.1
+ % Check the error for each j
+  if k > 1000 && max(err(k,:)) > 5*10^-9
+    plotngrid(X(1:k,:),Y(1:k,:), BM)
+    figure;
+    [Xm, Ym] = mvmasscenter(X,Y,BM);
+    plot(Xm, Ym);
+    figure;
+    plot(err(1000:k,j));
+    error('error too big');
   end
 end
 
