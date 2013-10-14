@@ -14,15 +14,16 @@ t0 = 0;
 % length of the simulation (in days)
 l = 404;
 errmax = 10*10^-9;
-dtmin = 50; %(seconds)
+dtmin = 5; %(seconds)
+lend = l*3600*24;
+lcurrent = 0;
 
 % time increments : (in seconds)
-dt = 600; %(in seconds)
-kmax = floor((24*3600*l)/dt)
+dt = 3600; %(in seconds)
 
 % Bodies description
 % Number of bodies
-n = 3;
+n = 2;
 % Masses (in kg);
 %BM = [ 1.988435*10^30, 5.9721986*10^24, 1.9*10^27];
 BM = [ 30*1.988435*10^30, 1.988435*10^30, 1.9721986*10^24];
@@ -44,10 +45,11 @@ BV0 = [ 0, 0, 0; % Initialy immobile sun
 BP1 = ics(BP0, BV0, dt);
 
 % Position vectors and initialisation :
-X = zeros(kmax,n);
-Y = zeros(kmax,n);
-Z = zeros(kmax,n);
-err = zeros(kmax,n);
+X = zeros(2,n);
+Y = zeros(2,n);
+Z = zeros(2,n);
+err = zeros(2,n);
+k = 2;
 
 X(1,1:n) = BP0(1:n,1)';
 Y(1,1:n) = BP0(1:n,2)';
@@ -55,12 +57,22 @@ Z(1,1:n) = BP0(1:n,3)';
 X(2,1:n) = BP1(1:n,1)';
 Y(2,1:n) = BP1(1:n,2)';
 Z(2,1:n) = BP1(1:n,3)';
+X = X;
+Y = Y;
+Z = Z;
 % Simulation :
-
-for k = 3:kmax
-  if mod(k,1000) == 0
-    k
+p = 0;
+while k < 3
+  k = k+1;
+  % display percentage
+  if floor(100*lcurrent/lend) == p
+    p
+    p = p+1;
   end
+  lcurrent = lcurrent + dt;
+  X = [X; zeros(1,n)];
+  Y = [Y; zeros(1,n)];
+  Z = [Z; zeros(1,n)];
   S = zeros(n,3);
   for j = 1:n
     Sx = 0; Sy = 0; Sz = 0;
@@ -73,30 +85,42 @@ for k = 3:kmax
         Sz = Sz + Ci*Fz;
       end
     end
-    X(k,j) = finite_diff(Sx, X(k-2,j), X(k-1,j), dt);
-    Y(k,j) = finite_diff(Sy, Y(k-2,j), Y(k-1,j), dt);
-    Z(k,j) = finite_diff(Sz, Z(k-2,j), Z(k-1,j), dt);
+    Xkj = finite_diff(Sx, X(k-2,j), X(k-1,j), dt)
+    Ykj = finite_diff(Sy, Y(k-2,j), Y(k-1,j), dt)
+    Zkj = finite_diff(Sz, Z(k-2,j), Z(k-1,j), dt)
+    X(k,j) = Xkj;
+    Y(k,j) = Ykj;
+    Z(k,j) = Zkj;
 
     % Store the result of f for each dimension.
     S(j,:) = [Sx; Sy; Sz];
   end
+
   % Second pass for heun's method
   for j = 1:n
-    Shx = 0; Shy = 0; Shz = 0;
+    Sx = 0; Sy = 0; Sz = 0;
     for i = 1:n
       if i ~= j
         Ci = G*BM(i);
         [Fx, Fy, Fz] = f(X(k, i), Y(k, i), Z(k, i), X(k, j), Y(k, j), Z(k, j));
-        Shx = Shx + Ci*Fx;
-        Shy = Shy + Ci*Fy;
-        Shz = Shz + Ci*Fz;
+        Sx = Sx + Ci*Fx;
+        Sy = Sy + Ci*Fy;
+        Sz = Sz + Ci*Fz;
       end
     end
-    X(k,j) = finite_diff((Shx+S(j,1))/2, X(k-2,j), X(k-1,j), dt);
-    Y(k,j) = finite_diff((Shy+S(j,2))/2, Y(k-2,j), Y(k-1,j), dt);
-    Z(k,j) = finite_diff((Shz+S(j,3))/2, Z(k-2,j), Z(k-1,j), dt);
-    err(k,j) = norm([X(k,j)-X(k,j), Y(k,j)-Y(k,j), Z(k,j)-Z(k,j)])/norm([X(k,j), Y(k,j), Z(k,j)]);
-    if k > 1000 && err(k,j) > 4*10^-8
+    Xkj = finite_diff((Sx+S(j,1))/2, X(k-2,j), X(k-1,j), dt)
+    Ykj = finite_diff((Sy+S(j,2))/2, Y(k-2,j), Y(k-1,j), dt)
+    Zkj = finite_diff((Sz+S(j,3))/2, Z(k-2,j), Z(k-1,j), dt)
+    err(k,j) = norm([X(k,j)-Xkj, Y(k,j)-Ykj, Z(k,j)-Zkj])/norm([Xkj, Ykj, Zkj])
+    X(k,j) = Xkj;
+    Y(k,j) = Ykj;
+    Z(k,j) = Zkj;
+  end
+
+  % Check the error for each j
+  if k > 1000 && max(err(k,:)) > 10^-9
+    %dt = dt*0.8
+    if dt < dtmin
       plotngrid(X(1:k,:),Y(1:k,:), BM)
       figure;
       hold on
@@ -104,8 +128,10 @@ for k = 3:kmax
         plot(err(1000:k,j));
       end
       hold off
-      return
+      error('error too big');
     end
+  elseif k > 1000 && max(err(k,:)) < 10^-10
+    %dt = dt*1.1
   end
 end
 
@@ -115,8 +141,4 @@ figure
 plot(X1, Y1);
 figure
 
-hold on
-for j = 1:n
-  plot(err(1000:kmax,j));
-end
-hold off
+plot(err(1000:k,:));

@@ -8,7 +8,7 @@ end
 x = R/2;
 y = sqrt(3/4)*R;
 r = m1/m2;
-alpha = atan((r-2)/(r*sqrt(3)))
+alpha = atan((r-2)/(r*sqrt(3)));
 speed = orbitalspeed(R, m1, m2);
 vy = speed*sin(alpha);
 vx = -speed*cos(alpha);
