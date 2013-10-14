@@ -15,27 +15,28 @@ t0 = 0;
 l = 404;
 
 % time increments : (in seconds)
-dt = 200; %(in seconds)
+dt = 100; %(in seconds)
 kmax = floor((24*3600*l)/dt)
 
 % Bodies description
 % Number of bodies
 n = 3;
-% Initial positions and speed (respectively in meters and meters/second) (at t = t0 (k = 0))
-BP0 = [ 0,        0, 0; % Central body (big sun)
-        200*10^9, 0, 0; % Second star.
-        100*10^9, sqrt(3/4)*200*10^9, 0]; % Orbiting body (planet)
-        %150*10^9, 0, 0; % Orbiting body (earth)
-        %0, 800*10^9, 0]; % Second orbiting body (jupiter)
-BV0 = [ 0, 0, 0; % Initialy immobile sun
-        0, 143500, 0; % Second star speed.
-        -126330, 68072, 0]; % Stationary planet.
-        %0, 3978, 0; % Earth speed.
-        %-13007, 0, 0]; % Second planet speed (jupiter).
-        %0, 29780, 0]; % Earth speed.
 % Masses (in kg);
 %BM = [ 1.988435*10^30, 5.9721986*10^24, 1.9*10^27];
 BM = [ 30*1.988435*10^30, 1.988435*10^30, 1.9721986*10^24];
+[lx, ly, vlx, vly] = l4char(200*10^9, BM(1), BM(2));
+% Initial positions and speed (respectively in meters and meters/second) (at t = t0 (k = 0))
+BP0 = [ 0,        0, 0; % Central body (big sun)
+        200*10^9, 0, 0; % Second star.
+        lx, ly, 0]; % Orbiting body (planet)
+        %150*10^9, 0, 0; % Orbiting body (earth)
+        %0, 800*10^9, 0]; % Second orbiting body (jupiter)
+BV0 = [ 0, 0, 0; % Initialy immobile sun
+        0, orbitalspeed(200*10^9, BM(1), BM(2)), 0; % Second star speed.
+        vlx, vly, 0]; % Stationary planet.
+        %0, 3978, 0; % Earth speed.
+        %-13007, 0, 0]; % Second planet speed (jupiter).
+        %0, 29780, 0]; % Earth speed.
 
 % Compute the initial positions at t = t0 + dt (k=1).
 BP1 = ics(BP0, BV0, dt);
@@ -96,7 +97,7 @@ for k = 3:kmax
     Yh(k,j) = finite_diff((Shy+S(j,2))/2, Yh(k-2,j), Yh(k-1,j), dt);
     Zh(k,j) = finite_diff((Shz+S(j,3))/2, Zh(k-2,j), Zh(k-1,j), dt);
     err(k,j) = norm([Xh(k,j)-X(k,j), Yh(k,j)-Y(k,j), Zh(k,j)-Z(k,j)])/norm([Xh(k,j), Yh(k,j), Zh(k,j)]);
-    if k > 1000 && err(k,j) > 4*10^-9
+    if k > 1000 && err(k,j) > 4*10^-8
       plotngrid(Xh(1:k,:),Yh(1:k,:), BM)
       figure;
       hold on
@@ -110,6 +111,9 @@ for k = 3:kmax
 end
 
 plotngrid(Xh, Yh, BM)
+figure
+[X1,Y1] = mvmasscenter(Xh, Yh, BM);
+plot(X1, Y1);
 figure
 
 hold on
