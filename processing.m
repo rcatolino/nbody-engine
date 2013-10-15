@@ -22,7 +22,7 @@ kmax = floor((24*3600*l)/dt)
 
 % Bodies description
 % Number of bodies
-n = 3;
+n = 2;
 % Masses (in kg);
 %BM = [ 1.988435*10^30, 5.9721986*10^24, 1.9*10^27];
 BM = [ 30*1.988435*10^30, 1.988435*10^30, 1.9721986*10^24];
@@ -34,7 +34,7 @@ BP0 = [ 0,        0, 0; % Central body (big sun)
         %150*10^9, 0, 0; % Orbiting body (earth)
         %0, 800*10^9, 0]; % Second orbiting body (jupiter)
 BV0 = [ 0, 0, 0; % Initialy immobile sun
-        0, orbitalspeed(200*10^9, BM(1), BM(2)), 0; % Second star speed.
+        0, 0.9*orbitalspeed(200*10^9, BM(1), BM(2)), 0; % Second star speed.
         vlx, vly, 0]; % Stationary planet.
         %0, 3978, 0; % Earth speed.
         %-13007, 0, 0]; % Second planet speed (jupiter).
@@ -109,7 +109,8 @@ for k = 3:kmax
   end
 end
 
-plotngrid(X, Y, BM)
+%plotngrid(X, Y, BM)
+plot(X,Y);
 figure
 [X1,Y1] = mvmasscenter(X, Y, BM);
 plot(X1, Y1);

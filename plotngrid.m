@@ -1,5 +1,6 @@
 function [] = plotngrid( X, Y, BM )
-if size(X,2) ~= 3
+n = size(X,2);
+if n < 3
   return;
 end
 hold on
@@ -7,7 +8,7 @@ hold on
 [Xa, Ya] = mvaxis(X1, Y1);
 plot(Xa(:,1),Ya(:,1),'xr')
 plot(Xa(:,2),Ya(:,2),'xg')
-plot(Xa(:,3),Ya(:,3),'b')
+plot(Xa(:,3:n),Ya(:,3:n))
 grid on
 axis equal
 hold off
